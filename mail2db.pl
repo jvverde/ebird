@@ -6,8 +6,7 @@ use DBI;
 use DateTime::Format::Strptime; # For ISO-8601 formatting
 
 # Variáveis para armazenar os argumentos da linha de comando
-my $dbname;
-my @filenames;
+my ($dbname, @filenames);
 
 # Processar argumentos da linha de comando
 GetOptions('db=s' => \$dbname) or die "Uso: $0 --db <nome_da_bd> <nome_do_ficheiro1> <nome_do_ficheiro2> ....<nome_do_ficheiroN>\n";
@@ -34,8 +33,9 @@ my $create_table_sql = qq{
         date TEXT,
         author TEXT,
         location TEXT,
-        map_url TEXT,
-        PRIMARY KEY (name, date, author)
+        map TEXT,
+        checklist TEXT, -- Adicionando checklist como parte da chave primária
+        PRIMARY KEY (name, date, author, checklist)
     )
 };
 $dbh->do($create_table_sql);
@@ -46,8 +46,11 @@ my $strp = DateTime::Format::Strptime->new(
     time_zone => 'floating',        # Fuso horário
 );
 
+#my $re = qr/^(.+) \((.+)\) (?:\((\d+)\))?.*?\n\s*- Reported (.+ \d{2}:\d{2}) by (.+)\s*?\n\s*- (.+)\s*?\n\s*- Map: (http:\/\/[^\s]+)\s*?\n\s*- Checklist: (https:\/\/ebird.org\/checklist\/[^\s]+)/m;
+my $re = qr/^(.+) \(([A-Z][a-z]+ [a-z]+)[^\d]*\)(?: \((\d+)\))?.*\n\s*- Reported (.+ \d{2}:\d{2}) by (.+)\s*?\n\s*- (.+)\s*?\n\s*- Map: (http:\/\/[^\s]+)\s*?\n\s*- Checklist: (https:\/\/ebird.org\/checklist\/[^\s]+)/m;
+
 # Processar cada arquivo de texto
-foreach my $filename (@filenames) {
+FILE: foreach my $filename (@filenames) {
     open my $fh, '<', $filename or die "Não é possível abrir o ficheiro $filename: $!";
 
     local $/ = "\n\n"; # Modo de parágrafo, lê até uma linha em branco
@@ -55,20 +58,18 @@ foreach my $filename (@filenames) {
     my $record = undef;
 
     while ($record = <$fh>) {
-        die "'$filename' is not clean. Please use cleanmail.pl to remove the CR" if $record =~ /\r/;
+        warn "'$filename' is not clean. Please use cleanmail.pl to remove the CR" and next FILE if $record =~ /\r/;
         # Verificar se o registro é válido antes de começar a processar
-        if ($record =~ /^(.+) \((.+)\) \(?(\d+)?\)?\s+- Reported (.+ \d{2}:\d{2}) by (.+)\s+- (.+)\s+- Map: (http:\/\/.+)$/m) {
-            last;
-        }
+        last if $record =~ $re;
     }
 
     while (1) { 
         chomp $record;
 
         # Extrair a informação do registro
-        if ($record =~ /^(.+) \((.+)\) \(?(\d+)?\)?.*?\n\s*- Reported (.+ \d{2}:\d{2}) by (.+)\s*?\n\s*- (.+)\s*?\n\s*- Map: (http:\/\/[^\s]+)/m) {
-            my ($species_name, $scientific_name, $count, $datetime, $author, $location, $map_url) = ($1, $2, $3 // 1, $4, $5, $6, $7);
-
+        if ($record =~ $re) {
+            my ($species_name, $scientific_name, $count, $datetime, $author, $location, $map, $checklist) = ($1, $2, $3 // 1, $4, $5, $6, $7, $8);
+            
             # Parse da data e hora
             my $dt = $strp->parse_datetime($datetime);
             
@@ -77,18 +78,20 @@ foreach my $filename (@filenames) {
 
             # Inserir no banco de dados
             my $insert_sql = qq{
-                INSERT OR IGNORE INTO $tablename (name, sci_name, count, date, author, location, map_url)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT OR IGNORE INTO $tablename (name, sci_name, count, date, author, location, map, checklist)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             };
             my $sth = $dbh->prepare($insert_sql);
-            $sth->execute($species_name, $scientific_name, $count, $iso_datetime, $author, $location, $map_url);
+            $sth->execute($species_name, $scientific_name, $count, $iso_datetime, $author, $location, $map, $checklist);
 
-            #print "Registro inserido: $species_name, $scientific_name, $count, $iso_datetime, $author, $location, $map_url\n";
+            # Mensagem por cada registro inserido
+            # print "Registro inserido: $species_name, $scientific_name, $count, $iso_datetime, $author, $location, $map, $checklist\n";
         } else {
             last if $record =~ /^\s*[*]+\s*$/;
+            # Registro inválido
             warn "Registro inválido no arquivo $filename:\n++++++\n$record\n------\n";
         }
-    } continue { $record = <$fh>; last unless defined $record }; # idea from https://stackoverflow.com/a/7899066
+    } continue { $record = <$fh>; last unless defined $record };  # idea from https://stackoverflow.com/a/7899066
 
     close $fh;
 

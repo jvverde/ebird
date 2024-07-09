@@ -1,6 +1,8 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+#binmode(STDOUT, ':utf8');
+#binmode(STDIN, ':utf8');
 
 use MIME::QuotedPrint;  # This module helps with decoding quoted-printable strings
 

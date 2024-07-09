@@ -1,6 +1,7 @@
 # Ignore everything in the data directory
 data/
 dbs/
+error_logs/
 
 # Ignore .lst files
 *.lst
