@@ -1,5 +1,6 @@
 # Ignore everything in the data directory
 data/
+dbs/
 
 # Ignore .lst files
 *.lst
