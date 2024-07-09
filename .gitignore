@@ -1,0 +1,12 @@
+# Ignore everything in the data directory
+data/
+
+# Ignore .lst files
+*.lst
+
+# Ignore .db files
+*.db
+
+# Ignore .eml files
+*.eml
+
