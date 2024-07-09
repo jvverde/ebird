@@ -1,4 +1,5 @@
 #!/bin/bash
+# Apply mail3db.pl (convert emailrecord to sqlite db) to all email files (.eml) found on a give or current directory
 
 # Treat unset variables as an error and exit immediately
 set -u
