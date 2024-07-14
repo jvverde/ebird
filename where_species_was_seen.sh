@@ -16,4 +16,4 @@ while getopts "s:d:" opt; do
 done
 shift $((OPTIND-1))
 
-sqlite3 dbs/ebird-"${1?$(usage)}".db "SELECT COUNT(*) as count,name, location, map FROM sightings WHERE location LIKE '%${site:-}%' AND date >= date('now', '-${days:-7} days') ${2:+AND name LIKE '%${2}%'} GROUP BY name, location ORDER BY count DESC;"
+sqlite3 dbs/ebird-"${1?$(usage)}".db "SELECT COUNT(*) as count,name, location, map FROM sightings WHERE location LIKE '%${site:-}%' AND date >= date('now', '-${days:-30} days') ${2:+AND name LIKE '%${2}%'} GROUP BY name, location ORDER BY count DESC;"
