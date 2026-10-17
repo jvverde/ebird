@@ -1,5 +1,5 @@
 #!/bin/bash
-# Apply mail3db.pl (convert emailrecord to sqlite db) to all email files (.eml) found on a give or current directory
+# Apply mail3db.pl (convert emailrecord to sqlite db) to all email files (.clean) found on a give or current directory
 
 # Treat unset variables as an error and exit immediately
 set -u
@@ -37,6 +37,8 @@ find "${dirs[@]}" -type f -name '*.eml' -printf '%h\n' | sort -u | while read -r
 do
     # Extract the directory name
     declare dirname="$(basename "$dir")"
+
+    ./cleanmail.pl "$dir"/*.eml
     # Run the command
-    ./mail2db.pl --db "${dbsdir}/ebird-${dirname}.db" "$dir"/* 2>"$errdir/${dirname}.lst"
+    ./mail2db.pl --db "${dbsdir}/ebird-${dirname}.db" "$dir"/*.clean #2>"$errdir/${dirname}.lst"
 done

@@ -48,6 +48,8 @@ my $strp = DateTime::Format::Strptime->new(
 
 #my $re = qr/^(.+) \((.+)\) (?:\((\d+)\))?.*?\n\s*- Reported (.+ \d{2}:\d{2}) by (.+)\s*?\n\s*- (.+)\s*?\n\s*- Map: (http:\/\/[^\s]+)\s*?\n\s*- Checklist: (https:\/\/ebird.org\/checklist\/[^\s]+)/m;
 my $re = qr/^(.+) \(([A-Z][a-z]+ [a-z]+)[^\d]*\)(?: \((\d+)\))?.*\n\s*- Reported (.+ \d{2}:\d{2}) by (.+)\s*?\n\s*- (.+)\s*?\n\s*- Map: (http:\/\/[^\s]+)\s*?\n\s*- Checklist: (https:\/\/ebird.org\/checklist\/[^\s]+)/m;
+#my $re = qr/^(.+) \(([A-Z][a-z]+ [a-z]+)[^\d]*\)(?: \((\d+)\))?.*\n\s*- Reported (.+ \d{2}:\d{2}) by (.+)\s*?\n\s*-\s?(.+)\s*?\n\s*- Map: (http:\/\/[^\s]+)\s*?\n\s*- Checklist: (https:\/\/ebird.org\/checklist\/[^\s]+)/m;
+#my $re = qr/^(.+) \(([A-Z][a-z]+ [a-z]+)[^\d]*\)(?: \((\d+)\))?.*\n\s*- Reported (.+ \d{2}:\d{2}) by (.+)\s*?\n((?:(?!- Map:).*\n)*?)\s*?- Map: (http:\/\/[^\s]+)\s*?\n\s*- Checklist: (https:\/\/ebird.org\/checklist\/[^\s]+)/m;
 
 # Processar cada arquivo de texto
 FILE: foreach my $filename (@filenames) {
